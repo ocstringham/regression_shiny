@@ -152,16 +152,32 @@ server <- function(input, output) {
   # output$viz = renderPrint(get)
   
   output$viz_plots = renderPlot({
-
+    
+    ## reqs
+    req(input_file())
+    req(getRV())
+    
     ## get data
     data <- input_file()
 
     ## get response variable
     response = getRV()
+    
+    ## get all explanatory vars
+    expl = names(data)[! names(data) %in% response]
 
-    ## plot random column
-    ggplot(data, aes(y = response, x = names(data)[2])) +
-      geom_point()
+    # ## plot random column
+    # ggplot(data, aes_string(y = response, x = expl[1])) +
+    #   geom_point()
+    
+    # create list of each plot
+    plot_list = list()
+    for(i in 1:expl){
+      
+      # get data type: either numeric or character
+      
+      
+    }
 
   })
   
