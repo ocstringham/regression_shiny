@@ -1,5 +1,6 @@
 library(shiny)
 library(shinyjs)
+library(shinyWidgets)
 library(shinythemes)
 library(sortable)
 library(glue)
@@ -52,13 +53,13 @@ ui <- fluidPage(
   # Select response variable
   fluidRow(column(12, align = "left", h3(uiOutput("response_var_title")))),
   fluidRow(column(12, align = "left", p(uiOutput("response_var_text")))),
-  fluidRow(column(12, align = "left", uiOutput("response_var"))),
+  fluidRow(column(6, offset = 3, align = "center", uiOutput("response_var"))),
   
   
   # Viz data
   fluidRow(column(12, align = "left", h3(uiOutput("viz_title")))),
   fluidRow(column(12, align = "left", p(uiOutput("viz_text")))),
-  fluidRow(column(12, align = "center", uiOutput("expl_var"))),
+  fluidRow(column(6, offset = 3, align = "center", uiOutput("expl_var"))),
   fluidRow(column(12, align = "left", plotOutput("viz_plots"))),
   
   
@@ -77,8 +78,10 @@ ui <- fluidPage(
   # View Output
   fluidRow(column(12, align = "left", h3(uiOutput("output_title")))),
   fluidRow(column(12, align = "left", p(uiOutput("output_text")))),
-  fluidRow(column(12, align = "center", uiOutput("model_output")))
+  fluidRow(column(12, align = "center", uiOutput("model_output"))),
   
+  fluidRow(),
+  fluidRow()
 )
 
 #----------------------------------------------------------------------------- #
@@ -136,8 +139,14 @@ server <- function(input, output, session) {
   output$response_var = renderUI({
     req(input_file())
     cols = colnames(input_file())
-    radioButtons(inputId = "response_var", label = "Select an independent variable.",
-             choices = cols, selected = character(0))
+    # radioButtons(inputId = "response_var", label = "Select an independent variable.",
+    #          choices = cols, selected = character(0))
+    radioGroupButtons(
+      inputId = "response_var", label = "Select an independent variable.", 
+      choices = cols, selected = character(0),
+      justified = TRUE, status = "secondary", direction = "vertical",  individual = TRUE,
+      checkIcon = list(yes = icon("ok", lib = "glyphicon"))
+    )
   }
   )
   
@@ -160,8 +169,14 @@ server <- function(input, output, session) {
     response = getRV()
     data <- input_file()
     expl = names(data)[! names(data) %in% response]
-    radioButtons(inputId = "expl_var", label = "Select an dependent variable to plot.",
-                 choices = expl, selected = character(0),  inline=T)
+    # radioButtons(inputId = "expl_var", label = "Select an dependent variable to plot.",
+    #              choices = expl, selected = character(0),  inline=T)
+    radioGroupButtons(
+      inputId = "expl_var", label = "Select an dependent variable to plot.", 
+      choices = expl, selected = character(0),
+      justified = TRUE, status = "secondary", direction = "vertical",  individual = TRUE,
+      checkIcon = list(yes = icon("ok", lib = "glyphicon"))
+    )
   }
   )
 
@@ -298,7 +313,7 @@ server <- function(input, output, session) {
   ## text
   output$output_title = renderText({
     req(input_file())
-    "6. Model Output"})
+    "6. Model output"})
   
   output$output_text = renderText({
     req(input_file())
