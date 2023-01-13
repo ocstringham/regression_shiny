@@ -2,15 +2,33 @@ library(shiny)
 library(shinyjs)
 library(shinythemes)
 library(sortable)
+library(glue)
+library(tibble)
+library(dplyr)
 library(ggplot2)
 library(egg)
 
 example_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
 
+
+
 # Define UI for application
 ui <- fluidPage( 
   
   theme = shinytheme("simplex"),
+  
+#   # css
+#   tags$head(
+#     tags$style(HTML("
+#   
+#   .colBord {
+#       border-color: #8d8d8d;
+#       border-width: 1px;
+#       border-style: groove;
+#       border-radius: 5px;
+#       border-spacing: 5px;
+# }
+# "))),
   
   # Application title
   titlePanel("Linear Regression"),
@@ -40,7 +58,6 @@ ui <- fluidPage(
   # Viz data
   fluidRow(column(12, align = "left", h3(uiOutput("viz_title")))),
   fluidRow(column(12, align = "left", p(uiOutput("viz_text")))),
-  # fluidRow(column(12, align = "center", uiOutput("plot_button"))),
   fluidRow(column(12, align = "center", uiOutput("expl_var"))),
   fluidRow(column(12, align = "left", plotOutput("viz_plots"))),
   
@@ -48,22 +65,26 @@ ui <- fluidPage(
   # Build models
   fluidRow(column(12, align = "left", h3(uiOutput("model_title")))),
   fluidRow(column(12, align = "left", p(uiOutput("model_text")))),
-  fluidRow(column(12, align = "left", uiOutput("buckets1"))),
-  fluidRow(column(12, align = "left", uiOutput("buckets2"))),
-  # fluidRow(column(4, align = "center", uiOutput("buckets3")))
+  fluidRow(column(3, offset = 1, align = "left", uiOutput("box_model1")),
+           column(3, offset = 1, align = "left", uiOutput("box_model2")),
+           column(3, offset = 1, align = "left", uiOutput("box_model3")),
+           column(3, offset = 1, align = "left", uiOutput("box_model4")),
+           column(3, offset = 1, align = "left", uiOutput("box_model5")),
+           column(3, offset = 1, align = "left", uiOutput("box_model6"))
+  ), 
   
   
   # View Output
   fluidRow(column(12, align = "left", h3(uiOutput("output_title")))),
   fluidRow(column(12, align = "left", p(uiOutput("output_text")))),
-  fluidRow(column(12, align = "left", p(uiOutput("model_output"))))
+  fluidRow(column(12, align = "center", uiOutput("model_output")))
   
 )
 
 #----------------------------------------------------------------------------- #
  
 # Define server logic required 
-server <- function(input, output) {
+server <- function(input, output, session) {
   
   # input csv file
   input_file <- reactive({
@@ -146,8 +167,15 @@ server <- function(input, output) {
 
   
   ### get response var
-  getRV <- reactive({ input$response_var})
-  getEV <- reactive({input$expl_var})
+  getRV <- reactive({ input$response_var })
+  getEV <- reactive({ input$expl_var })
+  getAllEV <- reactive({
+    req(input_file())
+    req(getRV())
+    data <- input_file()
+    response = getRV()
+    expl = names(data)[! names(data) %in% response]
+  })
   
   
   ## create plot
@@ -210,100 +238,148 @@ server <- function(input, output) {
     example_text})
     
 
+  ## Number of Candidate models to explore
+
+  ## Check box for model selection -> create module
+  output$box_model1 = renderUI({
+    req(getRV())
+    expl = getAllEV()
+    checkboxGroupInput(inputId = "model1",
+                       label = "Model 1",
+                      choices = expl)
+  })
+  
+  output$box_model2 = renderUI({
+    req(getRV())
+    expl = getAllEV()
+    checkboxGroupInput(inputId = "model2",
+                       label = "Model 2",
+                       choices = expl)
+  })
   
   
-  ## Drag and Drop Col names
-  output$buckets1 = renderUI( 
-      {
-        # create list of colnames
-        req(input_file())
-        req(getRV())
-        
-        response = getRV()
-        data <- input_file()
-        cols = names(data)[! names(data) %in% response]
-        
-        # create bucket list
-        h4("Model 1")
-        bucket_list(
-          header = "Drag the items in any desired bucket",
-          group_name = "bucket_list1",
-          orientation = "horizontal",
+  output$box_model3 = renderUI({
+    req(getRV())
+    expl = getAllEV()
+    checkboxGroupInput(inputId = "model3",
+                       label = "Model 3",
+                       choices = expl)
+  })
+  
+  output$box_model4 = renderUI({
+    req(getRV())
+    expl = getAllEV()
+    checkboxGroupInput(inputId = "model4",
+                       label = "Model 4",
+                       choices = expl)
+  })
+  
+  output$box_model5 = renderUI({
+    req(getRV())
+    expl = getAllEV()
+    checkboxGroupInput(inputId = "model5",
+                       label = "Model 5",
+                       choices = expl)
+  })
+  
+  output$box_model6 = renderUI({
+    req(getRV())
+    expl = getAllEV()
+    checkboxGroupInput(inputId = "model6",
+                       label = "Model 6",
+                       choices = expl)
+  })
 
 
-          add_rank_list(
-            text = "Drag from here",
-            labels = as.list(cols),
-            input_id = "b1_rank_list_1",
-            css_id = "b1_list1"),
-
-          add_rank_list(
-            text = "to here",
-            labels = NULL,
-            input_id = "b1_rank_list_2",
-            css_id = "b1_list2")
-      )
-
-    })
-  
-  
-  output$buckets2 = renderUI( 
-    {
-      # create list of colnames
-      req(input_file())
-      req(getRV())
-      
-      response = getRV()
-      data <- input_file()
-      cols = names(data)[! names(data) %in% response]
-      
-      
-      # create bucket list
-      bucket_list(
-        header = "Drag the items in any desired bucket",
-        group_name = "bucket_list2",
-        orientation = "horizontal",
-        
-        add_rank_list(
-          text = "Drag from here",
-          labels = as.list(cols),
-          input_id = "b2_rank_list_1",
-          css_id = "b2_list1"),
-        
-        add_rank_list(
-          text = "to here",
-          labels = NULL,
-          input_id = "b2_rank_list_2",
-          css_id = "b2_list2")
-      )
-      
-    })
-  
   
   
   # Model output
   
   ## text
-  output$viz_title = renderText({
+  output$output_title = renderText({
     req(input_file())
     "6. Model Output"})
   
-  output$viz_text = renderText({
+  output$output_text = renderText({
     req(input_file())
     example_text})
   
   ## output
   
   ### get Vars used in models
-  getModel1 <- reactive({ input$b1_rank_list_2})
-  getModel2 <- reactive({ input$b2_rank_list_2})
+  getModel1 <- reactive({ input$model1 })
+  getModel2 <- reactive({ input$model2 })
+  getModel3 <- reactive({ input$model3 })
+  getModel4 <- reactive({ input$model4 })
+  getModel5 <- reactive({ input$model5 })
+  getModel6 <- reactive({ input$model6 })
   
-  output$model_output = renderText( {
+  output$model_output = renderTable( {
+    
     req(input_file())
     req(getModel1())
+    
+    # get each model
     model1 = getModel1()
     model2 = getModel2()
-    paste(model1, model2)
+    model3 = getModel3()
+    model4 = getModel4()
+    model5 = getModel5()
+    model6 = getModel6()
+    
+    # run lm
+    
+    ## get data
+    data = input_file()
+    
+    ## Run models
+    
+    ### fun to run and process results
+    run_mod = function(data, rv, ev){
+      lm(data=data, formula = paste(rv, "~", paste(ev, collapse="+"), sep = ""))
+    }
+    
+    proc_mod = function(no, ev, mod){
+      tribble(
+        ~Model, ~`Independent Variable`, ~`Dependent Variables`, ~R2, ~AIC,
+        glue("Model {no}"), getRV(), paste(ev, collapse=", "), round(summary(mod)$r.squared,3), round(AIC(mod),2)
+      )
+    }
+    
+    ### Run 1st model
+    mod1 = run_mod(data, getRV(), model1)
+
+    #### Get Results
+    mod_results = proc_mod(1, model1, mod1)
+    
+    ### Run other models
+    if(!is.null(model2)){
+      mod2 = run_mod(data, getRV(), model2)
+      mod_results = mod_results %>% bind_rows(proc_mod(2, model2,mod2))
+    }
+    
+    if(!is.null(model3)){
+      mod3 = run_mod(data, getRV(), model3)
+      mod_results = mod_results %>% bind_rows(proc_mod(3, model3,mod3))
+    }
+    
+    if(!is.null(model4)){
+      mod4 = run_mod(data, getRV(), model4)
+      mod_results = mod_results %>% bind_rows(proc_mod(4, model4,mod4))
+    }
+    
+    if(!is.null(model5)){
+      mod5 = run_mod(data, getRV(), model5)
+      mod_results = mod_results %>% bind_rows(proc_mod(5, model5,mod5))
+    }
+    
+    if(!is.null(model6)){
+      mod6 = run_mod(data, getRV(), model6)
+      mod_results = mod_results %>% bind_rows(proc_mod(6, model6,mod6))
+    }
+    
+    mod_results
+
     
   })
   
@@ -320,29 +396,4 @@ shinyApp(ui = ui, server = server)
 
 
 
-
-# # create list of each plot
-# plot_list = list()
-# for(i in 1:length(expl)){
-#   
-#   # get data type: either numeric or character
-#   if(is.numeric(data$expl[i])){
-#     plot_list[[i]] =
-#       renderPlot({
-#       ggplot(data, aes_string(y = response, x = expl[i])) +
-#       geom_point()
-#       })
-#     
-#   }else if(is.character(data$expl[i])){
-#     plot_list[[i]] =
-#       renderPlot({
-#       ggplot(data, aes_string(y = response, x = expl[i])) +
-#       geom_boxplot()
-#       })
-#   }
-# }
-
-# print(plot_list[[1]])
-# wrap_plots(plot_list, ncol = 3)
-# do.call(tagList, plot_list)
 
