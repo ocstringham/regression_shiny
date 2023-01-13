@@ -2,7 +2,8 @@ library(shiny)
 library(shinyjs)
 library(shinyWidgets)
 library(shinythemes)
-library(sortable)
+# library(sortable)
+library(reactable)
 library(glue)
 library(tibble)
 library(dplyr)
@@ -11,85 +12,99 @@ library(egg)
 
 example_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
 
+# Set def col width
+dcw = 8
+# def offset
+dos = 2
 
-
-# Define UI for application
+# UI ----
 ui <- fluidPage( 
   
-  theme = shinytheme("simplex"),
+  ## set theme
+  theme = shinytheme("spacelab"),
   
-#   # css
-#   tags$head(
-#     tags$style(HTML("
-#   
-#   .colBord {
-#       border-color: #8d8d8d;
-#       border-width: 1px;
-#       border-style: groove;
-#       border-radius: 5px;
-#       border-spacing: 5px;
-# }
-# "))),
   
-  # Application title
+  ## Application title
   titlePanel("Linear Regression"),
+  # fluidRow(dcw, offset = dos, align="left", h1("Linear Regression & Model Testing")),
 
-  # File Input
+  # -------------------------------------------------------------------------- #
+  
+  ## File Input ----
   fluidRow(
         useShinyjs(),
-        column(12, align="left", p(example_text)),
-        column(12, align="left", h3("1. Upload data file"), p(example_text)),
-        column(12, align="center",
+        column(dcw, offset = dos, align="left", p(example_text)),
+        column(dcw, offset = dos, align="left", h3("1. Upload data file"), p(example_text)),
+        column(dcw, offset = dos, align="center",
           fileInput(inputId = "file1", label = "Select a .csv file", 
                     accept = c("text/csv", "text/comma-separated-values,text/plain",".csv")
                    )
         )),
     
-  # Table
-  fluidRow(column(12, align = "left", h3(uiOutput("tableTitle")))),
-  fluidRow(column(12, align = "left", p(uiOutput("tableText")))),
-  fluidRow(column(10, align='center', offset = 1, DT::dataTableOutput("table"))),
+  # -------------------------------------------------------------------------- #
+  
+  ## Table ----
+  fluidRow(column(dcw, offset = dos, align = "left", h3(uiOutput("tableTitle")))),
+  fluidRow(column(dcw, offset = dos, align = "left", p(uiOutput("tableText")))),
+  fluidRow(column(dcw, offset = dos, align='center', reactableOutput("table"))),
 
-  # Select response variable
-  fluidRow(column(12, align = "left", h3(uiOutput("response_var_title")))),
-  fluidRow(column(12, align = "left", p(uiOutput("response_var_text")))),
-  fluidRow(column(6, offset = 3, align = "center", uiOutput("response_var"))),
+  # -------------------------------------------------------------------------- #
   
+  ## Select response variable ----
+  fluidRow(column(dcw, offset = dos, align = "left", h3(uiOutput("response_var_title")))),
+  fluidRow(column(dcw, offset = dos, align = "left", p(uiOutput("response_var_text")))),
+  fluidRow(column(dcw, offset = dos, align = "center", uiOutput("response_var"))),
   
-  # Viz data
-  fluidRow(column(12, align = "left", h3(uiOutput("viz_title")))),
-  fluidRow(column(12, align = "left", p(uiOutput("viz_text")))),
-  fluidRow(column(6, offset = 3, align = "center", uiOutput("expl_var"))),
-  fluidRow(column(12, align = "left", plotOutput("viz_plots"))),
+  # -------------------------------------------------------------------------- #
   
+  ## Viz data ----
+  fluidRow(column(dcw, offset = dos, align = "left", h3(uiOutput("viz_title")))),
+  fluidRow(column(dcw, offset = dos, align = "left", p(uiOutput("viz_text")))),
+  fluidRow(column(dcw, offset = dos, align = "center", uiOutput("expl_var"))),
+  fluidRow(column(dcw-2, offset = dos+1, align = "center", plotOutput("viz_plots"))),
   
-  # Build models
-  fluidRow(column(12, align = "left", h3(uiOutput("model_title")))),
-  fluidRow(column(12, align = "left", p(uiOutput("model_text")))),
-  fluidRow(column(3, offset = 1, align = "left", uiOutput("box_model1")),
-           column(3, offset = 1, align = "left", uiOutput("box_model2")),
-           column(3, offset = 1, align = "left", uiOutput("box_model3")),
-           column(3, offset = 1, align = "left", uiOutput("box_model4")),
-           column(3, offset = 1, align = "left", uiOutput("box_model5")),
-           column(3, offset = 1, align = "left", uiOutput("box_model6"))
+  # -------------------------------------------------------------------------- #
+  
+  ## Build models ----
+  fluidRow(column(dcw, offset = dos, align = "left", h3(uiOutput("model_title")))),
+  fluidRow(column(dcw, offset = dos, align = "left", p(uiOutput("model_text")))),
+  fluidRow(
+    column(dcw, offset = dos, align = "left",
+           column(4, align = "left", uiOutput("box_model1")),
+           column(4, align = "left", uiOutput("box_model2")),
+           column(4, align = "left", uiOutput("box_model3")))
+  ),
+  fluidRow(
+    column(dcw, offset = dos, align = "left",
+           column(4, align = "left", uiOutput("box_model4")),
+           column(4, align = "left", uiOutput("box_model5")),
+           column(4, align = "left", uiOutput("box_model6"))
+    )
   ), 
   
+  # -------------------------------------------------------------------------- #
   
-  # View Output
-  fluidRow(column(12, align = "left", h3(uiOutput("output_title")))),
-  fluidRow(column(12, align = "left", p(uiOutput("output_text")))),
-  fluidRow(column(12, align = "center", uiOutput("model_output"))),
+  ## View Output ----
+  fluidRow(column(dcw, offset = dos, align = "left", h3(uiOutput("output_title")))),
+  fluidRow(column(dcw, offset = dos, align = "left", p(uiOutput("output_text")))),
+  fluidRow(column(dcw, offset = dos, align='center', reactableOutput("model_output"))),
   
-  fluidRow(),
-  fluidRow()
+  # -------------------------------------------------------------------------- #
+  
+  ## Interpret results ----
+  fluidRow(column(dcw, offset = dos, align = "left", h3(uiOutput("int_title")))),
+  fluidRow(column(dcw, offset = dos, align = "left", p(uiOutput("int_text"))))
+
 )
 
 #----------------------------------------------------------------------------- #
  
-# Define server logic required 
+# Server ----
 server <- function(input, output, session) {
   
-  # input csv file
+  # -------------------------------------------------------------------------- #
+  
+  # input csv file ----
   input_file <- reactive({
     if (is.null(input$file1)) {
       return("")
@@ -99,9 +114,9 @@ server <- function(input, output, session) {
     read.csv(file = input$file1$datapath)
   })
   
+  # -------------------------------------------------------------------------- #
   
-  
-  # output table
+  # output table ----
   
   ## text
   output$tableTitle = renderText({
@@ -115,19 +130,19 @@ server <- function(input, output, session) {
 
   
   ## table
-  output$table <- DT::renderDataTable({
+  output$table <- renderReactable({
     
     # render only if there is data available
     req(input_file())
     
     # reactives are only callable inside an reactive context like render
     data <- input_file()
-    data
+    reactable(data)
   })
   
+  # -------------------------------------------------------------------------- #
   
-  
-  # Select response variable
+  # Select response variable ----
   output$response_var_title = renderText({
     req(input_file())
     "3. Select independent variable"})
@@ -144,14 +159,15 @@ server <- function(input, output, session) {
     radioGroupButtons(
       inputId = "response_var", label = "Select an independent variable.", 
       choices = cols, selected = character(0),
-      justified = TRUE, status = "secondary", direction = "vertical",  individual = TRUE,
+      justified = TRUE, status = "primary", direction = "vertical",  individual = TRUE,
       checkIcon = list(yes = icon("ok", lib = "glyphicon"))
     )
   }
   )
   
+  # -------------------------------------------------------------------------- #
   
-  # Viz data
+  # Viz data ----
   
   ## text
   output$viz_title = renderText({
@@ -174,14 +190,14 @@ server <- function(input, output, session) {
     radioGroupButtons(
       inputId = "expl_var", label = "Select an dependent variable to plot.", 
       choices = expl, selected = character(0),
-      justified = TRUE, status = "secondary", direction = "vertical",  individual = TRUE,
+      justified = TRUE, status = "primary", direction = "vertical",  individual = TRUE,
       checkIcon = list(yes = icon("ok", lib = "glyphicon"))
     )
   }
   )
 
   
-  ### get response var
+  ### get response var 
   getRV <- reactive({ input$response_var })
   getEV <- reactive({ input$expl_var })
   getAllEV <- reactive({
@@ -215,11 +231,12 @@ server <- function(input, output, session) {
       
       if(is.numeric(data[, expl])){
         ggplot(data, aes_string(y = response, x = expl)) +
-          geom_point() +
+          geom_point(alpha = 0.7, color = "#19538C") +
           theme_presentation()
       }else if(is.character(data[, expl])){
         ggplot(data, aes_string(y = response, x = expl)) +
-          geom_boxplot() + 
+          geom_boxplot(color = "#19538C") + 
+          geom_jitter(color = "#19538C", alpha = 0.4) +
           theme_presentation()
       }
       
@@ -228,7 +245,8 @@ server <- function(input, output, session) {
     
       if(is.numeric(data[, expl])){
         ggplot(data, aes_string(y = response, x = expl)) +
-          geom_boxplot() + 
+          geom_boxplot(color = "#19538C") + 
+          geom_jitter(color = "#19538C", alpha = 0.4, height = 0) +
           theme_presentation()
       }else if(is.character(data[, expl])){
         ggplot(data, aes_string(group = response, fill = response, x = expl)) +
@@ -240,8 +258,9 @@ server <- function(input, output, session) {
 
   })
   
+  # -------------------------------------------------------------------------- #
   
-  # Build and run models
+  # Build and run models ----
   
   ## Text
   output$model_title = renderText({
@@ -256,59 +275,57 @@ server <- function(input, output, session) {
   ## Number of Candidate models to explore
 
   ## Check box for model selection -> create module
+  
+  create_cb = function(no, expl){
+    awesomeCheckboxGroup(
+      inputId = glue("model{no}"),
+      label = glue("Candidate Model {no}"),
+      choices = expl,
+      status = "primary"
+    )
+  }
+  
   output$box_model1 = renderUI({
     req(getRV())
     expl = getAllEV()
-    checkboxGroupInput(inputId = "model1",
-                       label = "Model 1",
-                      choices = expl)
+    create_cb(1, expl)
   })
   
   output$box_model2 = renderUI({
     req(getRV())
     expl = getAllEV()
-    checkboxGroupInput(inputId = "model2",
-                       label = "Model 2",
-                       choices = expl)
+    create_cb(2, expl)
   })
   
   
   output$box_model3 = renderUI({
     req(getRV())
     expl = getAllEV()
-    checkboxGroupInput(inputId = "model3",
-                       label = "Model 3",
-                       choices = expl)
+    create_cb(3, expl)
   })
   
   output$box_model4 = renderUI({
     req(getRV())
     expl = getAllEV()
-    checkboxGroupInput(inputId = "model4",
-                       label = "Model 4",
-                       choices = expl)
+    create_cb(4, expl)
   })
   
   output$box_model5 = renderUI({
     req(getRV())
     expl = getAllEV()
-    checkboxGroupInput(inputId = "model5",
-                       label = "Model 5",
-                       choices = expl)
+    create_cb(5, expl)
   })
   
   output$box_model6 = renderUI({
     req(getRV())
     expl = getAllEV()
-    checkboxGroupInput(inputId = "model6",
-                       label = "Model 6",
-                       choices = expl)
+    create_cb(6, expl)
   })
 
 
+  # -------------------------------------------------------------------------- #
   
-  
-  # Model output
+  # Model output ----
   
   ## text
   output$output_title = renderText({
@@ -329,7 +346,7 @@ server <- function(input, output, session) {
   getModel5 <- reactive({ input$model5 })
   getModel6 <- reactive({ input$model6 })
   
-  output$model_output = renderTable( {
+  output$model_output = renderReactable( {
     
     req(input_file())
     req(getModel1())
@@ -393,10 +410,24 @@ server <- function(input, output, session) {
       mod_results = mod_results %>% bind_rows(proc_mod(6, model6,mod6))
     }
     
-    mod_results
+    reactable(mod_results)
 
     
   })
+  
+  
+  # -------------------------------------------------------------------------- #
+  
+  # interpret results ----
+  
+  ## text
+  output$int_title = renderText({
+    req(input_file())
+    "7. Interpret model results"})
+  
+  output$int_text = renderText({
+    req(input_file())
+    example_text})
   
 }
 
