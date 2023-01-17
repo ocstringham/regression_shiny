@@ -25,8 +25,9 @@ ui <- fluidPage(
   
   
   ## Application title
-  titlePanel("Linear Regression"),
-  # fluidRow(dcw, offset = dos, align="left", h1("Linear Regression & Model Testing")),
+  # titlePanel("Linear Regression"),
+  fluidRow(column(dcw, offset = dos, align="left", 
+                  h1("Linear Regression & Model Testing"))),
 
   # -------------------------------------------------------------------------- #
   
@@ -88,6 +89,15 @@ ui <- fluidPage(
   fluidRow(column(dcw, offset = dos, align = "left", h3(uiOutput("output_title")))),
   fluidRow(column(dcw, offset = dos, align = "left", p(uiOutput("output_text")))),
   fluidRow(column(dcw, offset = dos, align='center', reactableOutput("model_output"))),
+  
+  
+  # -------------------------------------------------------------------------- #
+  
+  ## View Coeffs Output ----
+  fluidRow(column(dcw, offset = dos, align = "left", h4(uiOutput("coeffsTitle")))),
+  fluidRow(column(dcw, offset = dos, align = "left", p(uiOutput("coeffsText")))),
+  fluidRow(column(dcw, offset = dos, align = "center", uiOutput("coeffsChoice"))),
+  fluidRow(column(dcw, offset = dos, align='center', reactableOutput("coeffsTable"))),
   
   # -------------------------------------------------------------------------- #
   
@@ -372,9 +382,11 @@ server <- function(input, output, session) {
     }
     
     proc_mod = function(no, ev, mod){
+      smod = summary(mod)
       tribble(
-        ~Model, ~`Independent Variable`, ~`Dependent Variables`, ~R2, ~AIC,
-        glue("Model {no}"), getRV(), paste(ev, collapse=", "), round(summary(mod)$r.squared,3), round(AIC(mod),2)
+        ~Model, ~`Indep. Variable`, ~`Depen. Variables`, ~RSS, ~R2, ~AIC,
+        glue("Model {no}"), getRV(), paste(ev, collapse=" + "), 
+        round(sum(smod$residuals ^ 2),0), round(smod$r.squared,3), round(AIC(mod),1)
       )
     }
     
@@ -414,6 +426,116 @@ server <- function(input, output, session) {
 
     
   })
+  
+  
+  # Table of model coeffs ----
+  
+  ## Select model ----
+  output$coeffsTitle = renderText({
+    req(input_file())
+    "View model coefficient estimates"})
+  
+  output$coeffsText = renderText({
+    req(input_file())
+    example_text})
+  
+  output$coeffsChoice = renderUI({
+    
+    req(input_file())
+    req(getModel1())
+    
+    ## get list of avail models 
+    # avail_mods = c("Model 1", "Model 2", "Model 3",
+    #              "Model 4", "Model 5", "Model 6")
+    
+    avail_mods = c("Model 1")
+    if(!is.null(getModel2())) avail_mods = c(avail_mods, "Model 2")
+    if(!is.null(getModel3())) avail_mods = c(avail_mods, "Model 3")
+    if(!is.null(getModel4())) avail_mods = c(avail_mods, "Model 4")
+    if(!is.null(getModel5())) avail_mods = c(avail_mods, "Model 5")
+    if(!is.null(getModel6())) avail_mods = c(avail_mods, "Model 6")
+    
+    
+    ## radio
+    radioGroupButtons(
+      inputId = "coeffsChoice", label = "Select a model.", 
+      choices = avail_mods, selected = character(0),
+      justified = TRUE, status = "primary", direction = "vertical",  individual = TRUE,
+      checkIcon = list(yes = icon("ok", lib = "glyphicon"))
+    )
+  }
+  )
+  
+  
+  
+  ## Create coeff table ----
+  
+  ### get chosen model
+  getCoeffMod <- reactive({ input$coeffsChoice })
+  
+  output$coeffsTable = renderReactable( { 
+    
+    # has to be a way to share data btwn these funs but no time to figure out
+    req(input_file())
+    req(getModel1())
+    req(getCoeffMod())
+    
+    
+    # get model
+    modText = getCoeffMod()
+    if(modText == "Model 1"){
+      mod = getModel1()
+    }else if(modText == "Model 2"){
+      mod = getModel2()
+    }else if(modText == "Model 3"){
+      mod = getModel3()
+    }else if(modText == "Model 4"){
+      mod = getModel4()
+    }else if(modText == "Model 5"){
+      mod = getModel5()
+    }else if(modText == "Model 6"){
+      mod = getModel6()
+    }
+    
+    
+    # run lm
+    
+    ## get data
+    data = input_file()
+    
+    ## Run models
+    
+    ### fun to run and process results
+    run_mod = function(data, rv, ev){
+      lm(data=data, formula = paste(rv, "~", paste(ev, collapse="+"), sep = ""))
+    }
+    
+    ### fun to convert p value to stars
+    make_stars <- function(pval) {
+      stars = ""
+      if(pval <= 0.001)
+        stars = "***"
+      if(pval > 0.001 & pval <= 0.01)
+        stars = "**"
+      if(pval > 0.01 & pval <= 0.05)
+        stars = "*"
+      if(pval > 0.05 & pval <= 0.1)
+        stars = "."
+      stars
+    }
+    
+    # coeff table
+    mod_results = broom::tidy(run_mod(data, getRV(), mod)) %>% 
+      mutate(estimate = round(estimate, 2), std.error = round(std.error, 2), 
+             statistic = round(statistic, 2)) %>% 
+      mutate(signif = sapply(p.value, function(x) make_stars(x))) %>% 
+      select(-p.value, -statistic) %>% 
+      rename(p.value = signif)
+    
+    
+    reactable(mod_results)
+    
+    })
   
   
   # -------------------------------------------------------------------------- #
