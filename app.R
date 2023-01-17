@@ -17,6 +17,15 @@ dcw = 8
 # def offset
 dos = 2
 
+
+# Define Texts
+
+siteDesc = "This web application allows the user to input an data sheet, specify indpendent and dependent variables, view variable relationships, create multi candiate models for linear regression, and obtain summary statistics of each model's output."
+uploadText = "Choose a file from your computer to upload. This file must be in .csv format."
+viewDataText = "Take a look at your data in the table below. Make sure everything looks as it should. This table shows 10 rows at a time and your can view subsequent rows by clicking Next in the bottom right corner of the table. If something is wrong, go back to the original data sheet and revise as needed. Then, re-save the file as a .csv and upload it again."
+selectRespVarText = "Select your dependent variable, also known as the response variable. Your dependent variable is the variable you are seeking to explain (or predict) using indepdent variables, also known a explanatory variables or covariates."
+vizDataText = "A first step before analysis is to vizually explore your data. Specifically, using bivariate (2 variables) plots to see the relationship between your dependent and all independent variables is useful to obtain an intuitive understanding of your data. Click an independent variable below to view a bivariate plot with the dependent variable. If the indepedent variable is numeric, the plot will be a scatterplot. If the indepedent is categorical, (i.e., yes or no) then the plot will be a box plot. The box plots are also overlayed with a 'jitter' plot showing where the distribution of data points are."
+
 # UI ----
 ui <- fluidPage( 
   
@@ -27,15 +36,19 @@ ui <- fluidPage(
   ## Application title
   # titlePanel("Linear Regression"),
   fluidRow(column(dcw, offset = dos, align="left", 
-                  h1("Linear Regression & Model Testing"))),
+                  h1("Ecological Detective Lab"))),
+  fluidRow(column(dcw, offset = dos, align="left", 
+                  h4("Multi-Model Inferences and Observational Data"))),
+  fluidRow(column(dcw, offset = dos, align="left", 
+                  h5("Rutgers | Ecology 300"))),
 
   # -------------------------------------------------------------------------- #
   
   ## File Input ----
   fluidRow(
         useShinyjs(),
-        column(dcw, offset = dos, align="left", p(example_text)),
-        column(dcw, offset = dos, align="left", h3("1. Upload data file"), p(example_text)),
+        column(dcw, offset = dos, align="left", p(siteDesc)),
+        column(dcw, offset = dos, align="left", h3("1. Upload data file"), p(uploadText)),
         column(dcw, offset = dos, align="center",
           fileInput(inputId = "file1", label = "Select a .csv file", 
                     accept = c("text/csv", "text/comma-separated-values,text/plain",".csv")
@@ -135,7 +148,7 @@ server <- function(input, output, session) {
   
   output$tableText = renderText({
     req(input_file())
-    example_text})
+    viewDataText})
   
 
   
@@ -155,11 +168,11 @@ server <- function(input, output, session) {
   # Select response variable ----
   output$response_var_title = renderText({
     req(input_file())
-    "3. Select independent variable"})
+    "3. Select dependent variable"})
   
   output$response_var_text = renderText({
     req(input_file())
-    example_text})
+    selectRespVarText})
   
   output$response_var = renderUI({
     req(input_file())
@@ -167,7 +180,7 @@ server <- function(input, output, session) {
     # radioButtons(inputId = "response_var", label = "Select an independent variable.",
     #          choices = cols, selected = character(0))
     radioGroupButtons(
-      inputId = "response_var", label = "Select an independent variable.", 
+      inputId = "response_var", label = "Select an dependent variable.", 
       choices = cols, selected = character(0),
       justified = TRUE, status = "primary", direction = "vertical",  individual = TRUE,
       checkIcon = list(yes = icon("ok", lib = "glyphicon"))
@@ -186,7 +199,7 @@ server <- function(input, output, session) {
   
   output$viz_text = renderText({
     req(input_file())
-    example_text})
+    vizDataText})
   
   ## radio for expl var
   output$expl_var = renderUI({
@@ -198,7 +211,7 @@ server <- function(input, output, session) {
     # radioButtons(inputId = "expl_var", label = "Select an dependent variable to plot.",
     #              choices = expl, selected = character(0),  inline=T)
     radioGroupButtons(
-      inputId = "expl_var", label = "Select an dependent variable to plot.", 
+      inputId = "expl_var", label = "Select an independent variable to plot.", 
       choices = expl, selected = character(0),
       justified = TRUE, status = "primary", direction = "vertical",  individual = TRUE,
       checkIcon = list(yes = icon("ok", lib = "glyphicon"))
