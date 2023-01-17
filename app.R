@@ -25,6 +25,13 @@ uploadText = "Choose a file from your computer to upload. This file must be in .
 viewDataText = "Take a look at your data in the table below. Make sure everything looks as it should. This table shows 10 rows at a time and your can view subsequent rows by clicking Next in the bottom right corner of the table. If something is wrong, go back to the original data sheet and revise as needed. Then, re-save the file as a .csv and upload it again."
 selectRespVarText = "Select your dependent variable, also known as the response variable. Your dependent variable is the variable you are seeking to explain (or predict) using indepdent variables, also known a explanatory variables or covariates."
 vizDataText = "A first step before analysis is to vizually explore your data. Specifically, using bivariate (2 variables) plots to see the relationship between your dependent and all independent variables is useful to obtain an intuitive understanding of your data. Click an independent variable below to view a bivariate plot with the dependent variable. If the indepedent variable is numeric, the plot will be a scatterplot. If the indepedent is categorical, (i.e., yes or no) then the plot will be a box plot. The box plots are also overlayed with a 'jitter' plot showing where the distribution of data points are."
+buildModelText = "Here you can create up to 6 candidate models (i.e., hypotheses) with different combinations of independent variables. For each candidate model you can select one or more independent variables. Behind the scenes, this web application will use the program R to fit a linear regression to each candidate model you specify and show the results in a table below. "
+modelOutputText = "This table below shows the summary of each candidate model above. You can click each column name to sort from least to greatest and vice versa. RSS stands for Residuals Sum of Squares (i.e., the sum of all residuals squared); R2 is 'R squared', the proportion of variation in the dependent variable explained by the model; and the AIC (Akaike information criterion). "
+modelCoeffText = "Select a candidate model to show a table of the estimated coefficient (i.e., slope) values for each independent variable. For each regression model, the independent variables will have an estamated coefficient (i.e., slope) value. Further, by default, each model will also have an intercept term (B0). Each categorical independent variable will have a 'term' (slope) for each category in the variable. For example, if the independent variable is yes or no, then there will be one slope for yes and one for no. By default, the first term (alphabetally, 'no' in this case) gets grouped into the model intercept and thus doesn't appear in the table below. The p.value column uses the star notation, where *** means p < 0.001, ** means 0.01 < p <= 0.05, * means 0.05 < p <= 0.1, and nothing mean p > 0.01. "
+interpretText = ""
+endText = HTML("<p>This app was developed by Oliver Stringham using the R package shiny. The code underlying this app can be found at <a href='https://github.com/ocstringham/regression_shiny'>https://github.com/ocstringham/regression_shiny</a>.")
+
+
 
 # UI ----
 ui <- fluidPage( 
@@ -115,8 +122,9 @@ ui <- fluidPage(
   # -------------------------------------------------------------------------- #
   
   ## Interpret results ----
-  fluidRow(column(dcw, offset = dos, align = "left", h3(uiOutput("int_title")))),
-  fluidRow(column(dcw, offset = dos, align = "left", p(uiOutput("int_text"))))
+  fluidRow(column(dcw, offset = dos, align = "left", h2(""))),
+  fluidRow(column(dcw, offset = dos, align = "left", h3(""))),
+  fluidRow(column(dcw, offset = dos, align = "left", endText))
 
 )
 
@@ -288,11 +296,11 @@ server <- function(input, output, session) {
   ## Text
   output$model_title = renderText({
     req(input_file())
-    "5. Build models"})
+    "5. Create candidate models"})
   
   output$model_text = renderText({
     req(input_file())
-    example_text})
+    buildModelText})
     
 
   ## Number of Candidate models to explore
@@ -353,11 +361,11 @@ server <- function(input, output, session) {
   ## text
   output$output_title = renderText({
     req(input_file())
-    "6. Model output"})
+    "6. Candidate model summary"})
   
   output$output_text = renderText({
     req(input_file())
-    example_text})
+    modelOutputText})
   
   ## output
   
@@ -397,7 +405,7 @@ server <- function(input, output, session) {
     proc_mod = function(no, ev, mod){
       smod = summary(mod)
       tribble(
-        ~Model, ~`Indep. Variable`, ~`Depen. Variables`, ~RSS, ~R2, ~AIC,
+        ~Model, ~`Independent\n Variable`, ~`Dependent\n Variables`, ~RSS, ~R2, ~AIC,
         glue("Model {no}"), getRV(), paste(ev, collapse=" + "), 
         round(sum(smod$residuals ^ 2),0), round(smod$r.squared,3), round(AIC(mod),1)
       )
@@ -450,7 +458,7 @@ server <- function(input, output, session) {
   
   output$coeffsText = renderText({
     req(input_file())
-    example_text})
+    modelCoeffText})
   
   output$coeffsChoice = renderUI({
     
