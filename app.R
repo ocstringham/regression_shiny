@@ -7,6 +7,7 @@ library(reactable)
 library(glue)
 library(tibble)
 library(dplyr)
+library(purrr)
 library(ggplot2)
 library(egg)
 
@@ -531,27 +532,38 @@ server <- function(input, output, session) {
       lm(data=data, formula = paste(rv, "~", paste(ev, collapse="+"), sep = ""))
     }
     
-    ### fun to convert p value to stars
-    make_stars <- function(pval) {
-      stars = ""
-      if(pval <= 0.001)
-        stars = "***"
-      if(pval > 0.001 & pval <= 0.01)
-        stars = "**"
-      if(pval > 0.01 & pval <= 0.05)
-        stars = "*"
-      if(pval > 0.05 & pval <= 0.1)
-        stars = "."
-      stars
+    # ### fun to convert p value to stars
+    # make_stars <- function(pval) {
+    #   stars = ""
+    #   if(pval <= 0.001)
+    #     stars = "***"
+    #   if(pval > 0.001 & pval <= 0.01)
+    #     stars = "**"
+    #   if(pval > 0.01 & pval <= 0.05)
+    #     stars = "*"
+    #   if(pval > 0.05 & pval <= 0.1)
+    #     stars = "."
+    #   stars
+    # }
+    
+    # fun to convert estimate in to CIs
+    make_CIs = function(coeff_name, mod){
+      CI = confint(mod, coeff_name, level=0.95) %>% 
+        round(2) %>% 
+        paste(collapse = " to ")
+      return(CI)
     }
     
     # coeff table
-    mod_results = broom::tidy(run_mod(data, getRV(), mod)) %>% 
+    mod_f = run_mod(data, getRV(), mod)
+    mod_f_coeffs = names(mod_f$coefficients)
+    
+    mod_results = broom::tidy(mod_f) %>% 
       mutate(estimate = round(estimate, 2), std.error = round(std.error, 2), 
              statistic = round(statistic, 2)) %>% 
-      mutate(signif = sapply(p.value, function(x) make_stars(x))) %>% 
-      select(-p.value, -statistic) %>% 
-      rename(p.value = signif)
+      # mutate(signif = sapply(p.value, function(x) make_stars(x))) %>% 
+      mutate(`95% CI` = map_chr(mod_f_coeffs, ~make_CIs(.x, mod_f))) %>%
+      select(-statistic, -p.value)
     
     
     reactable(mod_results)
